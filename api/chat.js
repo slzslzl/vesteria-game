@@ -1,18 +1,28 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Only POST allowed');
+  // Проверяем, что это POST запрос
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-    const apiKey = process.env.GEMINI_API_KEY; // Он возьмет ключ из настроек Vercel
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const API_KEY = process.env.GEMINI_API_KEY;
+  
+  // Если ключа нет в настройках Vercel - это сразу вызовет ошибку
+  if (!API_KEY) {
+    return res.status(500).json({ error: 'API Key is missing in Environment Variables' });
+  }
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(req.body)
-        });
-        const data = await response.json();
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body) // Передаем то, что пришло из игры (промпт и схему)
+    });
+
+    const data = await response.json();
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 }
