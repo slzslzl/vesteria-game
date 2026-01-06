@@ -3185,7 +3185,7 @@ function applyGameUpdates(updates) {
     if (typeof updates.gamePhase === 'string') gameState.gamePhase = updates.gamePhase;
 }
         
-        // Fetches random starter skills from LLM for character creation
+// Fetches random starter skills from LLM for character creation
         async function fetchStarterSkills() {
             console.log('[fetchStarterSkills] Fetching starter skills...');
             skillOptionsDiv.innerHTML = '<p class="text-gray-500 italic">Загрузка навыков...</p>';
@@ -3202,38 +3202,43 @@ function applyGameUpdates(updates) {
             Верни ответ в формате JSON.
             `;
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-const apiUrl = '/api/chat';
+            const apiUrl = '/api/chat';
+            
+            // ИСПРАВЛЕННЫЙ ПЕЙЛОАД (ПОД СТАНДАРТ GEMINI API)
             const payload = {
                 contents: chatHistory,
                 generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                 
+                    response_mime_type: "application/json", // Исправлено на правильный ключ
+                    response_schema: { // Исправлено на правильный ключ
                         type: "ARRAY",
                         items: {
                             type: "OBJECT",
                             properties: {
-         
                                 name: { type: "STRING" },
                                 description: { type: "STRING" },
                                 level: { type: "NUMBER" },
- 
                                 upgradable: { type: "BOOLEAN" },
-                                maxLevel: { type: "NUMBER" } // Added maxLevel
-                          
+                                maxLevel: { type: "NUMBER" }
                             },
-                            required: ["name", "description", "level", "upgradable", "maxLevel"] // Required
+                            required: ["name", "description", "level", "upgradable", "maxLevel"]
                         }
                     }
                 }
-   
             };
+
             try {
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const response = await fetch(apiUrl, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
                 const result = await response.json();
+                
                 if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
                     let responseText = result.candidates[0].content.parts[0].text;
                     let parsedSkills;
+                    
                     try {
                         parsedSkills = JSON.parse(responseText);
                         console.log('[fetchStarterSkills] Skills fetched successfully:', parsedSkills);
@@ -3249,43 +3254,43 @@ const apiUrl = '/api/chat';
                              console.log('[fetchStarterSkills] Skills parsed after cleanup:', parsedSkills);
                         } catch (finalParseError) {
                             console.error("Ошибка парсинга JSON для навыков:", finalParseError, "Оригинальный текст:", responseText);
-                            showMessageModal("Ошибка", "Не удалось загрузить стартовые навыки. Пожалуйста, перезагрузите страницу.");
+                            showMessageModal("Ошибка", "Не удалось загрузить стартовые навыки.");
                             return;
                         }
                     }
-                    if (Array.isArray(parsedSkills) && parsedSkills.length === 3) { // Ensure exactly 3 skills are returned
-                        skillOptionsDiv.innerHTML = ''; // Clear loading message
+
+                    if (Array.isArray(parsedSkills) && parsedSkills.length === 3) {
+                        skillOptionsDiv.innerHTML = ''; 
                         parsedSkills.forEach(skill => {
                             const skillDiv = document.createElement('div');
                             skillDiv.classList.add('flex', 'items-center', 'gap-2', 'p-2', 'bg-gray-100', 'rounded-md', 'cursor-pointer', 'hover:bg-gray-200');
      
                             skillDiv.innerHTML = `
                                 <input type="radio" name="startSkill" id="skill_${skill.name.replace(/\s/g, '_')}" value="${skill.name}" class="form-radio text-blue-600">
-                                <label for="skill_${skill.name.replace(/\s/g, '_')}" class="text-sm">${skill.name} (${skill.description})</label>
+                                <label for="skill_${skill.name.replace(/\s/g, '_')}" class="text-sm"><strong>${skill.name}</strong>: ${skill.description}</label>
                             `;
+                            
                             skillDiv.querySelector('input').addEventListener('change', (event) => {
                                 const selectedSkillName = event.target.value;
-      
                                 const selectedSkill = parsedSkills.find(s => s.name === selectedSkillName);
-                                gameState.player.skills = [selectedSkill]; // Set the selected skill
-                                createCharButton.disabled = charNameInput.value.trim() === '' || !selectedSkill; // Re-check button state
+                                gameState.player.skills = [selectedSkill]; 
+                                createCharButton.disabled = charNameInput.value.trim() === '' || !selectedSkill;
                             });
                             skillOptionsDiv.appendChild(skillDiv);
                         });
-                        // Initial check for create button state after skills load
                         createCharButton.disabled = charNameInput.value.trim() === '' || (gameState.player.skills && gameState.player.skills.length === 0);
                     } else {
-                        showMessageModal("Ошибка", "Не удалось получить список навыков от Венди. Попробуйте еще раз.");
+                        showMessageModal("Ошибка", "Не удалось получить список навыков. Попробуйте еще раз.");
                         skillOptionsDiv.innerHTML = '<p class="text-red-500 italic">Не удалось загрузить навыки.</p>';
                     }
                 } else {
-                    showMessageModal("Ошибка", "Пустой ответ при загрузке навыков. Попробуйте еще раз.");
+                    showMessageModal("Ошибка", "Пустой ответ при загрузке навыков.");
                     skillOptionsDiv.innerHTML = '<p class="text-red-500 italic">Не удалось загрузить навыки.</p>';
                 }
             } catch (error) {
                 console.error("Ошибка связи с LLM (навыки):", error);
-                showMessageModal("Ошибка", "Произошла ошибка связи при загрузке навыков. Пожалуйста, попробуйте еще раз.");
-                skillOptionsDiv.innerHTML = '<p class="text-red-500 italic">Ошибка загрузки навыков из-за проблем с сетью.</p>';
+                showMessageModal("Ошибка", "Произошла ошибка связи.");
+                skillOptionsDiv.innerHTML = '<p class="text-red-500 italic">Ошибка загрузки навыков.</p>';
             }
         }
         
@@ -5131,4 +5136,4 @@ questTabButtons.forEach(button => {
 });
     </script>
 </body>
-</html>
+    </html>
