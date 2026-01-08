@@ -3,337 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вестерия</title>
+    <title>Вестерия: Возрождение</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Стили игры */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a202c;
-            color: #e2e8f0;
-            overflow: hidden; 
-            user-select: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Экран загрузки */
-        #loading-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            transition: opacity 0.5s;
-        }
-        .loader-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #fbbf24;
-            border-radius: 50%;
-            width: 40px; height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Основной контейнер */
-        #game-container {
-            display: flex;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            position: relative; 
-        }
-
-        /* Левая панель */
-        #left-panel {
-            width: 250px;
-            background-color: #2d3748;
-            border-right: 1px solid #4a5568;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            flex-shrink: 0;
-            z-index: 10;
-        }
-        #game-title {
-            font-family: 'Caveat', cursive;
-            font-size: 2.5rem;
-            color: #fbbf24;
-            text-align: center;
-            margin-bottom: 2rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .menu-button {
-            background-color: #4a5568;
-            color: white;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.75rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            transition: 0.2s;
-        }
-        .menu-button:hover { background-color: #718096; color: #fbbf24; }
-        .menu-button i { margin-right: 0.75rem; width: 20px; text-align: center; }
-
-        /* Центр */
-        #main-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            position: relative;
-        }
-        #story-log {
-            flex-grow: 1;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-            padding-right: 0.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-        .log-entry {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            background-color: #2d3748;
-            border-left: 4px solid #4a5568;
-            line-height: 1.6;
-            animation: fadeIn 0.3s ease-out;
-        }
-        .log-entry.system { border-left-color: #ef4444; color: #fca5a5; font-style: italic; }
-        .log-entry.player { border-left-color: #fbbf24; background-color: #374151; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Ввод */
-        #input-area { display: flex; gap: 0.5rem; }
-        #action-input {
-            flex-grow: 1; padding: 1rem; border-radius: 0.5rem;
-            background-color: #2d3748; border: 1px solid #4a5568; color: white;
-        }
-        #send-button {
-            padding: 0 1.5rem; background-color: #fbbf24; color: #1a202c;
-            border-radius: 0.5rem; font-weight: bold; cursor: pointer;
-        }
-        #send-button:disabled { background-color: #718096; cursor: not-allowed; }
-
-        /* Правая панель */
-        #right-panel {
-            width: 300px;
-            background-color: #2d3748;
-            border-left: 1px solid #4a5568;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            overflow-y: auto;
-        }
-        .stat-row { display: flex; justify-content: space-between; font-size: 0.9rem; }
-        .progress-bar-container { background: #1a202c; height: 8px; border-radius: 4px; overflow: hidden; }
-        .progress-bar { height: 100%; transition: width 0.5s; }
-        .bg-health { background-color: #ef4444; }
-        .bg-mana { background-color: #3b82f6; }
+        body { background-color: #1a202c; color: #e2e8f0; margin: 0; display: flex; height: 100vh; flex-direction: column; overflow: hidden; }
         
-        /* Мобильный адаптив */
-        @media (max-width: 768px) {
-            #game-container { flex-direction: column; }
-            #left-panel, #right-panel { display: none; } /* Для упрощения пока скроем на моб */
+        /* Лог сообщений */
+        #story-log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .entry { padding: 15px; border-radius: 8px; background: #2d3748; border-left: 4px solid #4a5568; line-height: 1.5; }
+        .entry.player { border-left-color: #fbbf24; background: #374151; align-self: flex-end; max-width: 80%; }
+        .entry.system { border-left-color: #ef4444; color: #fca5a5; font-style: italic; }
+
+        /* Панель ввода - ГАРАНТИРОВАННО ВИДИМАЯ */
+        #input-container { 
+            background: #2d3748; 
+            padding: 20px; 
+            border-top: 2px solid #4a5568;
+            display: flex;
+            gap: 10px;
+            z-index: 9999; /* Поверх всего */
         }
+        
+        input { 
+            flex: 1; 
+            background: #1a202c; 
+            border: 1px solid #4a5568; 
+            padding: 12px; 
+            color: white; 
+            border-radius: 5px;
+            outline: none;
+        }
+        input:focus { border-color: #fbbf24; }
+        
+        button { 
+            background: #fbbf24; 
+            color: #1a202c; 
+            font-weight: bold; 
+            padding: 0 25px; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        button:disabled { background: #4a5568; opacity: 0.5; }
+
+        /* Спиннер загрузки */
+        .typing { font-size: 0.8rem; color: #fbbf24; margin-bottom: 5px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">
-        <div class="loader-spinner"></div>
-        <div id="loading-text">Инициализация нейросети...</div>
-        <div id="error-message" style="color: #ef4444; margin-top: 10px; text-align: center; max-width: 80%; display: none;"></div>
+    <div id="story-log">
+        <div class="entry"><b>Система:</b> Инициализация мира...</div>
     </div>
 
-    <div id="game-container">
-        <div id="left-panel">
-            <div id="game-title">Вестерия</div>
-            <div class="menu-button"><i class="fas fa-user"></i>Персонаж</div>
-            <div class="menu-button"><i class="fas fa-book"></i>Задания</div>
-            <div class="menu-button"><i class="fas fa-cog"></i>Настройки</div>
-        </div>
-
-        <div id="main-area">
-            <div id="story-log"></div>
-            <div id="input-area">
-                <input type="text" id="action-input" placeholder="Ваше действие..." autocomplete="off">
-                <button id="send-button"><i class="fas fa-paper-plane"></i></button>
-            </div>
-        </div>
-
-        <div id="right-panel">
-            <h3 style="color:#fbbf24; font-family:'Caveat'; font-size:1.5rem; border-bottom:1px solid #4a5568;">Состояние</h3>
-            
-            <div class="stat-row"><span>Здоровье</span><span id="hp-val">100/100</span></div>
-            <div class="progress-bar-container"><div class="progress-bar bg-health" id="hp-bar" style="width: 100%"></div></div>
-            
-            <div class="stat-row"><span>Мана</span><span id="mp-val">50/50</span></div>
-            <div class="progress-bar-container"><div class="progress-bar bg-mana" id="mp-bar" style="width: 100%"></div></div>
-
-            <h3 style="color:#fbbf24; font-family:'Caveat'; font-size:1.5rem; border-bottom:1px solid #4a5568; margin-top:1rem;">Инвентарь</h3>
-            <div id="inventory-list" style="font-size: 0.9rem; color: #a0aec0;">Пусто</div>
-        </div>
+    <div id="input-container">
+        <div id="status-typing" class="typing" style="position: absolute; top: -25px; left: 20px;">Мастер думает...</div>
+        <input type="text" id="user-input" placeholder="Введите ваше действие (например: осмотреться)..." autocomplete="off">
+        <button id="send-btn">ОТПРАВИТЬ</button>
     </div>
 
-<script>
-    // --- НАСТРОЙКИ И ПЕРЕМЕННЫЕ ---
-    const apiUrl = '/api/chat'; // Путь к серверу Vercel
-    let gameState = {
-        hp: 100, maxHp: 100,
-        mp: 50, maxMp: 50,
-        inventory: [],
-        location: "Старый лагерь",
-        history: [] // История переписки для контекста
-    };
+    <script>
+        const log = document.getElementById('story-log');
+        const input = document.getElementById('user-input');
+        const btn = document.getElementById('send-btn');
+        const typing = document.getElementById('status-typing');
 
-    // Элементы UI
-    const ui = {
-        log: document.getElementById('story-log'),
-        input: document.getElementById('action-input'),
-        btn: document.getElementById('send-button'),
-        loading: document.getElementById('loading-screen'),
-        loadingText: document.getElementById('loading-text'),
-        errorMsg: document.getElementById('error-message'),
-        hpVal: document.getElementById('hp-val'),
-        hpBar: document.getElementById('hp-bar')
-    };
-
-    // --- ФУНКЦИИ ---
-
-    function addLog(text, type = 'normal') {
-        const div = document.createElement('div');
-        div.className = `log-entry ${type}`;
-        // Преобразуем markdown-жирный текст (**текст**) в html (<b>текст</b>)
-        let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-        div.innerHTML = formatted;
-        ui.log.appendChild(div);
-        ui.log.scrollTop = ui.log.scrollHeight;
-    }
-
-    function updateStats(updates) {
-        if (!updates) return;
-        if (updates.hp) gameState.hp = Math.max(0, Math.min(gameState.maxHp, gameState.hp + updates.hp));
-        // Обновляем UI
-        ui.hpVal.innerText = `${gameState.hp}/${gameState.maxHp}`;
-        ui.hpBar.style.width = `${(gameState.hp / gameState.maxHp) * 100}%`;
-    }
-
-    // ГЛАВНАЯ ФУНКЦИЯ: ЗАПРОС К НЕЙРОСЕТИ
-    async function sendAction(action) {
-        // Блокируем ввод
-        ui.input.disabled = true;
-        ui.btn.disabled = true;
-        ui.loading.style.display = 'flex'; // Показываем лоадер (маленький или прозрачный, если хочешь)
-        ui.loading.style.backgroundColor = 'rgba(0,0,0,0.3)'; // Легкое затемнение при ходе
-        ui.loadingText.innerText = "Мастер обдумывает ход...";
-        
-        // Формируем историю для контекста
-        const messages = [
-            {
-                role: "system",
-                content: `Ты — Гейм Мастер текстовой RPG "Вестерия". 
-                Правила:
-                1. Отвечай в формате JSON.
-                2. Структура ответа: { "narrative": "Текст сюжета", "hp_change": 0 }.
-                3. Не используй markdown в JSON.
-                4. Текущее состояние игрока: HP ${gameState.hp}.`
-            },
-            ...gameState.history,
-            { role: "user", content: action }
-        ];
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: messages })
-            });
-
-            if (!response.ok) {
-                // Если ошибка (например Invalid Key), читаем её текст
-                const errText = await response.text();
-                throw new Error(`Ошибка сервера (${response.status}): ${errText}`);
-            }
-
-            const data = await response.json();
-            
-            // Gemini возвращает сложную структуру, нам нужно достать текст
-            // Обычно это data.candidates[0].content.parts[0].text
-            let rawText = "";
-            if (data.candidates && data.candidates[0].content) {
-                rawText = data.candidates[0].content.parts[0].text;
-            } else if (data.text) {
-                rawText = data.text; // Для некоторых прокси
-            } else {
-                throw new Error("Непонятный ответ от нейросети");
-            }
-
-            // Пытаемся распарсить JSON из ответа нейросети
-            // Часто нейросеть оборачивает JSON в ```json ... ```, надо почистить
-            const jsonString = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-            const gameData = JSON.parse(jsonString);
-
-            // 1. Выводим сюжет
-            addLog(gameData.narrative);
-            
-            // 2. Обновляем статы
-            if (gameData.hp_change) updateStats({ hp: gameData.hp_change });
-
-            // 3. Сохраняем в историю
-            gameState.history.push({ role: "user", content: action });
-            gameState.history.push({ role: "model", content: jsonString });
-
-        } catch (e) {
-            console.error(e);
-            addLog(`❌ <b>Системная ошибка:</b> ${e.message}`, "system");
-            if (e.message.includes("API key")) {
-                addLog("👉 Проверь ключ API в настройках Vercel!", "system");
-            }
-        } finally {
-            // Разблокируем ввод
-            ui.input.disabled = false;
-            ui.btn.disabled = false;
-            ui.input.value = '';
-            ui.input.focus();
-            ui.loading.style.display = 'none'; // Скрываем лоадер
+        function addEntry(text, type = '') {
+            const div = document.createElement('div');
+            div.className = `entry ${type}`;
+            div.innerHTML = text.replace(/\n/g, '<br>');
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
         }
-    }
 
-    // Инициализация при старте
-    window.addEventListener('load', () => {
-        // Скрываем первоначальную загрузку
-        ui.loading.style.display = 'none';
-        
-        // Приветственное сообщение
-        addLog("Добро пожаловать в Вестерию. Вы стоите у потухшего костра. Вокруг темный лес.", "system");
-        
-        // Обработчики кнопок
-        ui.btn.addEventListener('click', () => {
-            const val = ui.input.value.trim();
-            if (val) {
-                addLog(val, "player");
-                sendAction(val);
+        async function play(action) {
+            if (!action) return;
+            
+            addEntry(action, 'player');
+            input.value = '';
+            input.disabled = true;
+            btn.disabled = true;
+            typing.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: [{ role: "user", content: action }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Ошибка сервера: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Извлекаем текст из структуры Gemini
+                let aiText = "";
+                if (data.candidates && data.candidates[0].content) {
+                    aiText = data.candidates[0].content.parts[0].text;
+                } else {
+                    aiText = "Нейросеть прислала пустой ответ. Проверьте API.";
+                }
+
+                addEntry(aiText);
+
+            } catch (e) {
+                addEntry(`❌ ОШИБКА: ${e.message}`, 'system');
+                console.error(e);
+            } finally {
+                input.disabled = false;
+                btn.disabled = false;
+                typing.style.display = 'none';
+                input.focus();
             }
-        });
-        
-        ui.input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') ui.btn.click();
-        });
-    });
+        }
 
-</script>
+        btn.onclick = () => play(input.value);
+        input.onkeypress = (e) => { if (e.key === 'Enter') play(input.value); };
+
+        // Стартовая проверка ключа при загрузке
+        window.onload = async () => {
+            addEntry("⚙️ Проверка связи с Gemini API...", "system");
+            try {
+                const res = await fetch('/api/chat', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ messages: [{role:"user", content:"Привет"}] })
+                });
+                if (res.ok) {
+                    addEntry("✅ Связь установлена! Ключ работает. Можете начинать игру.", "system");
+                } else {
+                    addEntry("⚠️ Ошибка ключа или сервера. Проверьте логи Vercel.", "system");
+                }
+            } catch (e) {
+                addEntry("🚫 Ошибка сети. Вы запустили сайт через Vercel?", "system");
+            }
+        };
+    </script>
 </body>
 </html>
