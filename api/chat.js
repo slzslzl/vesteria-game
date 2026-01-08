@@ -1,65 +1,50 @@
-// Используем старый добрый require, чтобы Vercel не ругался на типы модулей
-// Нам не нужен node-fetch в новых версиях Node, но мы используем встроенный fetch
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-module.exports = async (req, res) => {
-    // 1. Настройка заголовков (CORS), чтобы браузер не блокировал запрос
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-        'Access-Control-Allow-Headers',
-        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-    );
+  // Твой ключ OpenRouter, который ты скинул
+  const OPENROUTER_API_KEY = "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";
 
-    // Если это предварительный запрос браузера - сразу говорим "ОК"
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+  try {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "model": "deepseek/deepseek-chat", // Используем DeepSeek V3 через OpenRouter
+        "messages": req.body.messages,
+        "temperature": 0.7
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("OpenRouter Error:", data);
+      return res.status(response.status).json(data);
     }
 
-    const API_KEY = process.env.GEMINI_API_KEY;
-
-    // ПРОВЕРКА 1: Ключ на месте?
-    if (!API_KEY) {
-        console.error("Нет API ключа");
-        return res.status(200).json({
-            candidates: [{ content: { parts: [{ text: JSON.stringify([{name: "ОШИБКА", description: "В Vercel не прописан GEMINI_API_KEY", level: 1, upgradable: false, maxLevel: 1}]) }] } }]
-        });
-    }
-
-    try {
-        // ПРОВЕРКА 2: Тело запроса пришло?
-        const payload = req.body;
-        if (!payload) {
-             throw new Error("Тело запроса пустое");
+    // Возвращаем ответ в формате, который ожидает твоя игра
+    // Мы приводим его к структуре Gemini, чтобы не переделывать фронтенд
+    const result = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              { text: data.choices[0].message.content }
+            ]
+          }
         }
+      ]
+    };
 
-        const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}';
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    return res.status(200).json(result);
 
-        const data = await response.json();
-
-        // ПРОВЕРКА 3: Ошибка от самого Google?
-        if (data.error) {
-            console.error("Ошибка Google:", data.error);
-            // Возвращаем ошибку так, чтобы игра её показала как "навык"
-            return res.status(200).json({
-                candidates: [{ content: { parts: [{ text: JSON.stringify([{name: "ОШИБКА GOOGLE", description: data.error.message, level: 1, upgradable: false, maxLevel: 1}]) }] } }]
-            });
-        }
-
-        // Всё ок, отдаем данные
-        return res.status(200).json(data);
-
-    } catch (error) {
-        console.error("Критическая ошибка:", error);
-        // Возвращаем ошибку в формате игры
-        return res.status(200).json({
-            candidates: [{ content: { parts: [{ text: JSON.stringify([{name: "КРИТИЧЕСКАЯ ОШИБКА", description: error.message, level: 1, upgradable: false, maxLevel: 1}]) }] } }]
-        });
-    }
-};
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    return res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+}
